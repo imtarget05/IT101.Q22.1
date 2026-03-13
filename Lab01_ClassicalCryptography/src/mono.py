@@ -1,41 +1,169 @@
-# auto_mono.py (skeleton)
-import random, collections
-from mono_freq_helper import normalize
+import random
+import re
+from collections import Counter
 
-ALPH = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
-def apply_key(ciphertext, key_map):
-    s = normalize(ciphertext, keep_space=True)
-    return ''.join(key_map.get(ch, ch) if ch.isalpha() else ch for ch in s)
+# -----------------------------
+# TEXT NORMALIZATION
+# -----------------------------
+
+def normalize(text):
+    text = text.upper()
+    return re.sub('[^A-Z]', '', text)
+
+
+# -----------------------------
+# APPLY KEY
+# -----------------------------
+
+def decrypt(ciphertext, key):
+
+    mapping = dict(zip(ALPHABET, key))
+
+    plaintext = ""
+
+    for c in ciphertext:
+        plaintext += mapping.get(c, c)
+
+    return plaintext
+
+
+# -----------------------------
+# ENGLISH SCORING
+# -----------------------------
+
+COMMON_WORDS = [
+"THE","AND","TO","OF","IN","IS","THAT","IT",
+"FOR","ON","WITH","AS","AT","BY"
+]
+
+def score_text(text):
+
+    score = 0
+
+    for word in COMMON_WORDS:
+        score += text.count(word) * len(word)
+
+    return score
+
+
+# -----------------------------
+# RANDOM KEY
+# -----------------------------
 
 def random_key():
-    l = list(ALPH)
-    random.shuffle(l)
-    return {ALPH[i]: l[i] for i in range(26)}
 
-def score_text(text, wordset):
-    words = text.split()
-    good = sum(1 for w in words if w.lower() in wordset)
-    return good
+    letters = list(ALPHABET)
 
-# main hill-climb with restarts
-def hill_climb(ciphertext, wordset, restarts=200, iter_per_restart=2000):
-    best = ("", -1, None)
-    for r in range(restarts):
-        key = random_key()
-        cur_plain = apply_key(ciphertext, key)
-        cur_score = score_text(cur_plain, wordset)
-        for it in range(iter_per_restart):
-            # swap two letters in mapping
-            a,b = random.sample(ALPH,2)
-            new_map = key.copy()
-            # swap images
-            va, vb = new_map[a], new_map[b]
-            new_map[a], new_map[b] = vb, va
-            pt = apply_key(ciphertext, new_map)
-            sc = score_text(pt, wordset)
-            if sc > cur_score:
-                key, cur_score = new_map, sc
-        if cur_score > best[1]:
-            best = (apply_key(ciphertext, key), cur_score, key)
-    return best
+    random.shuffle(letters)
+
+    return "".join(letters)
+
+
+# -----------------------------
+# MUTATE KEY
+# -----------------------------
+
+def swap_key(key):
+
+    a,b = random.sample(range(26),2)
+
+    key_list = list(key)
+
+    key_list[a],key_list[b] = key_list[b],key_list[a]
+
+    return "".join(key_list)
+
+
+# -----------------------------
+# HILL CLIMB
+# -----------------------------
+
+def hill_climb(ciphertext, iterations=2000):
+
+    key = random_key()
+
+    best_key = key
+    best_score = -1
+
+    for _ in range(iterations):
+
+        candidate = swap_key(key)
+
+        plaintext = decrypt(ciphertext, candidate)
+
+        score = score_text(plaintext)
+
+        if score > best_score:
+            best_score = score
+            best_key = candidate
+            key = candidate
+
+    return best_key, best_score
+
+
+# -----------------------------
+# SOLVER
+# -----------------------------
+
+def solve(ciphertext, restarts=200):
+
+    ciphertext = normalize(ciphertext)
+
+    best_key = None
+    best_score = -1
+    best_plaintext = ""
+
+    for i in range(restarts):
+
+        key,score = hill_climb(ciphertext)
+
+        if score > best_score:
+
+            best_score = score
+            best_key = key
+            best_plaintext = decrypt(ciphertext,key)
+
+            print("\nBetter result found!")
+            print("Score:",score)
+            print("Key:",key)
+            print("Preview:")
+            print(best_plaintext[:300])
+
+    return best_key,best_plaintext
+
+
+# -----------------------------
+# MAIN
+# -----------------------------
+
+if __name__ == "__main__":
+
+    import os
+
+    base_dir = os.path.dirname(__file__)
+
+    file_path = os.path.join(base_dir,"../data/task2_2_cipher.txt")
+
+    if not os.path.exists(file_path):
+
+        print("Ciphertext file not found:",file_path)
+        exit()
+
+    with open(file_path,"r",encoding="utf-8") as f:
+        ciphertext = f.read()
+
+    print("Ciphertext loaded\n")
+
+    key,plaintext = solve(ciphertext)
+
+    print("\n==============================")
+    print("FINAL RESULT")
+    print("==============================")
+
+    print("Key:",key)
+
+    print("\nPlaintext:\n")
+
+    print(plaintext)
