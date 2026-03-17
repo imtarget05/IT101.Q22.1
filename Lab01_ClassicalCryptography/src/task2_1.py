@@ -45,7 +45,7 @@ def brute_force(ciphertext):
 
 def read_cipher_file():
     base = os.path.dirname(__file__)
-    path = os.path.join(base, "data", "task2_1_cipher.txt")
+    path = os.path.join(base, ".." ,"data", "task2_1_cipher.txt")
 
     with open(path) as f:
         return f.read()
