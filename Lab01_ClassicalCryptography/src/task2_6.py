@@ -22,7 +22,7 @@ def index_of_coincidence(text):
     denominator = N*(N-1)
     return numerator/denominator if denominator != 0 else 0
 
-def guess_key_lengths(ciphertext, max_len=16):
+def guess_key_lengths(ciphertext, max_len=20):
     text = normalize(ciphertext)
     results = []
     for key_len in range(1, max_len+1):
