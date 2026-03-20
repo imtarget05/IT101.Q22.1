@@ -1,18 +1,8 @@
 import re
 
-
-# ================================
-# TEXT NORMALIZATION
-# ================================
-
 def normalize(text):
     text = text.upper()
     return re.sub('[^A-Z]', '', text)
-
-
-# ================================
-# RAIL FENCE ENCRYPT
-# ================================
 
 def rail_fence_encrypt(plaintext, rails):
 
@@ -36,21 +26,11 @@ def rail_fence_encrypt(plaintext, rails):
 
     return ciphertext
 
-
-# ================================
-# RAIL FENCE DECRYPT
-# ================================
-
 def rail_fence_decrypt(ciphertext, rails):
-
     text = normalize(ciphertext)
-
-    # tạo pattern zigzag
     pattern = []
-
     rail = 0
     direction = 1
-
     for _ in range(len(text)):
 
         pattern.append(rail)
@@ -60,21 +40,15 @@ def rail_fence_decrypt(ciphertext, rails):
         if rail == 0 or rail == rails - 1:
             direction *= -1
 
-    # đếm số ký tự mỗi rail
     rail_counts = [pattern.count(r) for r in range(rails)]
-
-    # chia ciphertext vào rails
     rails_data = []
-
     index = 0
 
     for count in rail_counts:
         rails_data.append(list(text[index:index+count]))
         index += count
 
-    # tái dựng plaintext
     plaintext = ""
-
     rail_indices = [0]*rails
 
     for r in pattern:
@@ -85,10 +59,6 @@ def rail_fence_decrypt(ciphertext, rails):
 
     return plaintext
 
-
-# ================================
-# DEMO
-# ================================
 
 if __name__ == "__main__":
 
