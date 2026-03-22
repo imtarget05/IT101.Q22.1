@@ -1,149 +1,82 @@
 import string
 
-
-def generate_matrix(key):
-
-    key = key.upper().replace(" ", "")
-    key = key.replace("J", "I")
-
-    seen = set()
-    matrix = []
-
-    for char in key:
-        if char not in seen:
-            seen.add(char)
-            matrix.append(char)
-
-    for char in string.ascii_uppercase:
-        if char == 'J':
-            continue
-        if char not in seen:
-            seen.add(char)
-            matrix.append(char)
-
-    matrix = [matrix[i:i+5] for i in range(0,25,5)]
-
-    return matrix
+def normalize(text):
+    return ''.join(ch.upper() for ch in text if ch.isalpha())
 
 
-def find_position(matrix, letter):
+def encrypt(plaintext, key):
+    plain = normalize(plaintext)
+    key_norm = normalize(key)
 
-    for i in range(5):
-        for j in range(5):
-            if matrix[i][j] == letter:
-                return i, j
-
-
-def preprocess(text):
-
-    text = text.upper().replace(" ", "")
-    text = text.replace("J","I")
-
-    pairs = []
-    i = 0
-
-    while i < len(text):
-
-        a = text[i]
-
-        if i+1 < len(text):
-            b = text[i+1]
-
-            if a == b:
-                pairs.append(a + "X")
-                i += 1
-            else:
-                pairs.append(a + b)
-                i += 2
-        else:
-            pairs.append(a + "X")
-            i += 1
-
-    return pairs
-
-
-def encrypt_pair(matrix, a, b):
-
-    r1,c1 = find_position(matrix,a)
-    r2,c2 = find_position(matrix,b)
-
-    if r1 == r2:
-        return matrix[r1][(c1+1)%5] + matrix[r2][(c2+1)%5]
-
-    elif c1 == c2:
-        return matrix[(r1+1)%5][c1] + matrix[(r2+1)%5][c2]
-
-    else:
-        return matrix[r1][c2] + matrix[r2][c1]
-
-
-def decrypt_pair(matrix, a, b):
-
-    r1,c1 = find_position(matrix,a)
-    r2,c2 = find_position(matrix,b)
-
-    if r1 == r2:
-        return matrix[r1][(c1-1)%5] + matrix[r2][(c2-1)%5]
-
-    elif c1 == c2:
-        return matrix[(r1-1)%5][c1] + matrix[(r2-1)%5][c2]
-
-    else:
-        return matrix[r1][c2] + matrix[r2][c1]
-
-
-def encrypt(text,key):
-
-    matrix = generate_matrix(key)
-
-    pairs = preprocess(text)
+    if not key_norm:
+        print("Key không hợp lệ!")
+        return ""
 
     cipher = ""
+    key_len = len(key_norm)
 
-    for p in pairs:
-        cipher += encrypt_pair(matrix,p[0],p[1])
+    for i, ch in enumerate(plain):
+        p = ord(ch) - ord('A')
+        k = ord(key_norm[i % key_len]) - ord('A')
+        c = (p + k) % 26
+        cipher += chr(c + ord('A'))
 
     return cipher
 
 
-def decrypt(cipher,key):
+def decrypt(ciphertext, key):
+    cipher = normalize(ciphertext)
+    key_norm = normalize(key)
 
-    matrix = generate_matrix(key)
+    if not key_norm:
+        print("Key không hợp lệ!")
+        return ""
 
-    cipher = cipher.upper()
+    plain = ""
+    key_len = len(key_norm)
 
-    plaintext = ""
+    for i, ch in enumerate(cipher):
+        c = ord(ch) - ord('A')
+        k = ord(key_norm[i % key_len]) - ord('A')
+        p = (c - k + 26) % 26
+        plain += chr(p + ord('A'))
 
-    for i in range(0,len(cipher),2):
-
-        plaintext += decrypt_pair(matrix,cipher[i],cipher[i+1])
-
-    return plaintext
+    return plain
 
 
-def print_matrix(matrix):
-
-    print("Playfair Matrix:\n")
-
-    for row in matrix:
-        print(" ".join(row))
+def showKeyStream(plaintext, key):
+    plain = normalize(plaintext)
+    key_norm = normalize(key)
+    key_len = len(key_norm)
+    stream = ''.join(key_norm[i % key_len] for i in range(len(plain)))
+    return stream
 
 
 if __name__ == "__main__":
+    key = input("Nhập key: ").strip()
 
-    key = "HARRY POTTER"
+    while True:
+        print("\n1. Encrypt (Mã hóa)")
+        print("2. Decrypt (Giải mã)")
+        print("3. Exit")
+        ch = input("Chọn: ").strip()
 
-    plaintext = "HELLO WORLD"
+        if ch == '1':
+            t = input("Nhập plaintext: ")
+            result = encrypt(t, key)
+            print(f"=> Key stream   : {showKeyStream(t, key)}")
+            print(f"=> Plaintext    : {normalize(t)}")
+            print(f"=> Ciphertext   : {result}\n")
 
-    matrix = generate_matrix(key)
+        elif ch == '2':
+            t = input("Nhập ciphertext: ")
+            result = decrypt(t, key)
+            print(f"=> Ciphertext   : {normalize(t)}")
+            print(f"=> Plaintext    : {result}\n")
+            
+        elif ch == '3':
+            print("Thoát chương trình.")
+            break
 
-    print_matrix(matrix)
-
-    cipher = encrypt(plaintext,key)
-
-    print("\nPlaintext:",plaintext)
-    print("Ciphertext:",cipher)
-
-    decrypted = decrypt(cipher,key)
-
-    print("\nDecrypted:",decrypted)
+        else:
+            print("Lựa chọn không hợp lệ!\n")
