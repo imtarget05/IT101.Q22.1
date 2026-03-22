@@ -62,7 +62,7 @@ def rail_fence_decrypt(ciphertext, rails):
 
 if __name__ == "__main__":
 
-    plaintext = "WE ARE DISCOVERED FLEE AT ONCE"
+    plaintext = "HELLO WORLD"
 
     rails = 3
 
