@@ -1,80 +1,85 @@
-import string
+import os
 
 def normalize(text):
     return ''.join(ch.upper() for ch in text if ch.isalpha())
 
 
 def encrypt(plaintext, key):
-    plain = normalize(plaintext)
-    key_norm = normalize(key)
-
-    if not key_norm:
-        print("Key không hợp lệ!")
-        return ""
-
-    cipher = ""
-    key_len = len(key_norm)
-
-    for i, ch in enumerate(plain):
-        p = ord(ch) - ord('A')
-        k = ord(key_norm[i % key_len]) - ord('A')
-        c = (p + k) % 26
-        cipher += chr(c + ord('A'))
-
-    return cipher
-
+    plain, k = normalize(plaintext), normalize(key)
+    klen = len(k)
+    return ''.join(
+        chr((ord(ch) - ord('A') + ord(k[i % klen]) - ord('A')) % 26 + ord('A'))
+        for i, ch in enumerate(plain)
+    )
 
 def decrypt(ciphertext, key):
-    cipher = normalize(ciphertext)
-    key_norm = normalize(key)
+    k = normalize(key)
+    klen = len(k)
+    result = []
+    idx = 0  
 
-    if not key_norm:
-        print("Key không hợp lệ!")
-        return ""
+    for ch in ciphertext:
+        if ch.isalpha():
+            c = ord(ch.upper()) - ord('A')
+            ki = ord(k[idx % klen]) - ord('A')
+            p = (c - ki + 26) % 26
+            result.append(chr(p + ord('A')))
+            idx += 1
+        else:
+            result.append(ch)  
 
-    plain = ""
-    key_len = len(key_norm)
-
-    for i, ch in enumerate(cipher):
-        c = ord(ch) - ord('A')
-        k = ord(key_norm[i % key_len]) - ord('A')
-        p = (c - k + 26) % 26
-        plain += chr(p + ord('A'))
-
-    return plain
+    return ''.join(result)
 
 
-def showKeyStream(plaintext, key):
-    plain = normalize(plaintext)
-    key_norm = normalize(key)
-    key_len = len(key_norm)
-    stream = ''.join(key_norm[i % key_len] for i in range(len(plain)))
-    return stream
+def keyStream(text, key):
+    plain, k = normalize(text), normalize(key)
+    return ''.join(k[i % len(k)] for i in range(len(plain)))
+
+
+def readFromFile():
+    filepath = os.path.normpath(
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "data", "task2_5_cipher.txt")
+    )
+    if not os.path.exists(filepath):
+        print(f"Không tìm thấy file: {filepath}")
+        return None
+    with open(filepath, "r", encoding="utf-8") as f:
+        content = f.read()
+    print(f"Đã đọc file: {filepath}")
+    return content
 
 
 if __name__ == "__main__":
-    key = input("Nhập key: ").strip()
-
+    key = input("Nhập key: ").strip() 
     while True:
-        print("\n1. Encrypt (Mã hóa)")
-        print("2. Decrypt (Giải mã)")
-        print("3. Exit")
+        print("\n1. Encrypt")
+        print("2. Decrypt")
+        print("3. Decrypt từ file task2_5_cipher.txt")
+        print("4. Exit")
         ch = input("Chọn: ").strip()
 
         if ch == '1':
             t = input("Nhập plaintext: ")
             result = encrypt(t, key)
-            print(f"=> Key stream   : {showKeyStream(t, key)}")
-            print(f"=> Plaintext    : {normalize(t)}")
-            print(f"=> Ciphertext   : {result}\n")
+            print(f"=> Key stream : {keyStream(t, key)}")
+            print(f"=> Plaintext  : {normalize(t)}")
+            print(f"=> Ciphertext : {result}\n")
 
         elif ch == '2':
             t = input("Nhập ciphertext: ")
             result = decrypt(t, key)
-            print(f"=> Ciphertext   : {normalize(t)}")
-            print(f"=> Plaintext    : {result}\n")
-            
+            print(f"=> Plaintext  : {result}\n")
+
         elif ch == '3':
+            content = readFromFile()
+            if content:
+                print("\n--- Nội dung file ---")
+                print(content)
+                print("---------------------\n")
+                result = decrypt(content, key)
+                print(f"=> Plaintext  : {result}\n")
+
+        elif ch == '4':
             print("Thoát chương trình.")
             break
 
