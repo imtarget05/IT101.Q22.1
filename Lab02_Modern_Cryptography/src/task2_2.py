@@ -11,4 +11,4 @@ cipher_cbc = AES.new(key, AES.MODE_CBC, iv=iv)
 ct_cbc = cipher_cbc.encrypt(plaintext)
 
 print(f"ECB Hex: {ct_ecb.hex()}")
-print(f"CBC Hex: {ct_cbc.hex()}\n")
+print(f"CBC Hex: {ct_cbc.hex()}")
